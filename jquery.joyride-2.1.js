@@ -397,6 +397,14 @@
         methods.set_target();
       },
 
+      set_scroll : function(opts){
+          if (opts == true){
+              settings.scroll = true;
+          }else{
+              settings.scroll = false;
+          }
+      },
+
       set_next_tip : function () {
         settings.$next_tip = $('.joyride-tip-guide[data-index=' + settings.$li.index() + ']');
       },
