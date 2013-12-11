@@ -284,7 +284,9 @@
             }
 
             // scroll if not modal
-            if (!/body/i.test(settings.$target.selector) && (settings.scroll || settings.tipSettings.scroll)) {
+
+            var shouldScroll = ( settings.tipSettings.scroll != settings.scroll ) ? settings.tipSettings.scroll : settings.scroll ;
+            if (!/body/i.test(settings.$target.selector) && (shouldScroll == true)) {
               methods.scroll_to();
             }
 
