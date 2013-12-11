@@ -22,6 +22,9 @@
       'startTimerOnClick'    : true,      // true or false - true requires clicking the first button start the timer
       'startOffset'          : 0,         // the index of the tooltip you want to start on (index of the li)
       'nextButton'           : true,      // true or false to control whether a next button is used
+      'prevButton'           : false,     // true or false to control whether a previous button is used
+      'disableNext'          : false,
+      'disablePrev'          : false,
       'tipAnimation'         : 'fade',    // 'pop' or 'fade' in each tip
       'pauseAfter'           : [],        // array of indexes where to pause the tour after
       'tipAnimationFadeSpeed': 300,       // when tipAnimation = 'fade' this is speed in milliseconds for the transition
@@ -41,14 +44,16 @@
       'preStepCallback'      : $.noop,    // A method to call before each step
       'postStepCallback'     : $.noop,    // A method to call after each step
       'template' : { // HTML segments for tip layout
-        'link'    : '<a href="#close" class="joyride-close-tip">X</a>',
-        'timer'   : '<div class="joyride-timer-indicator-wrap"><span class="joyride-timer-indicator"></span></div>',
-        'tip'     : '<div class="joyride-tip-guide"><span class="joyride-nub"></span></div>',
-        'wrapper' : '<div class="joyride-content-wrapper" role="dialog"></div>',
-        'button'  : '<a href="#" class="joyride-next-tip"></a>',
-        'modal'   : '<div class="joyride-modal-bg"></div>',
-        'expose'  : '<div class="joyride-expose-wrapper"></div>',
-        'exposeCover': '<div class="joyride-expose-cover"></div>'
+        'link'         : '<a href="#close" class="joyride-close-tip">X</a>',
+        'timer'        : '<div class="joyride-timer-indicator-wrap"><span class="joyride-timer-indicator"></span></div>',
+        'tip'          : '<div class="joyride-tip-guide"><span class="joyride-nub"></span></div>',
+        'wrapper'      : '<div class="joyride-content-wrapper" role="dialog"></div>',
+        'next_button'  : '<a href="#" class="joyride-next-tip"></a>',
+        'prev_button'  : '<a href="#" class="joyride-prev-tip"></a>',
+        'prev_button_disabled' : '<a href="#" class="joyride-prev-tip disabled"></a>',
+        'modal'        : '<div class="joyride-modal-bg"></div>',
+        'expose'       : '<div class="joyride-expose-wrapper"></div>',
+        'exposeCover'  : '<div class="joyride-expose-cover"></div>'
       }
     },
 
@@ -63,6 +68,7 @@
 
           if ($.isEmptyObject(settings)) {
             var nextTipClickableClassSelector = '.joyride-next-tip';
+            var prevTipClickableClassSelector = '.joyride-prev-tip';
             settings = $.extend(true, defaults, opts);
 
             // non configurable settings
@@ -75,6 +81,7 @@
             settings.$tip_content = $('> li', settings.$content_el);
             settings.paused = false;
             settings.attempts = 0;
+            settings.direction = 'next';
 
             settings.tipLocationPatterns = {
               top: ['bottom'],
@@ -118,18 +125,37 @@
             settings.$document.on('click.joyride', nextTipClickableClassSelector, function (e) {
               e.preventDefault();
 
-              if (settings.$li.next().length < 1) {
-                methods.end();
-              } else if (settings.timer > 0) {
-                clearTimeout(settings.automate);
-                methods.hide();
-                methods.show();
-                methods.startTimer();
-              } else {
-                methods.hide();
-                methods.show();
-              }
+              if ( ! $(this).hasClass('disabled')){
+                settings.direction = 'next';
 
+                if (settings.$li.next().length < 1) {
+                  methods.end();
+                } else if (settings.timer > 0) {
+                  clearTimeout(settings.automate);
+                  methods.hide();
+                  methods.show();
+                  methods.startTimer();
+                } else {
+                  methods.hide();
+                  methods.show();
+                }
+              }
+            });
+
+            settings.$document.on('click.joyride', prevTipClickableClassSelector, function (e) {
+              e.preventDefault();
+
+              if ( ! $(this).hasClass('disabled')){
+                settings.direction = 'prev';
+
+                if (settings.$li.prev().length < 1)
+                {
+                  $(this).addClass('disabled');
+                }else{
+                  methods.hide();
+                  methods.show();
+                }
+              }
             });
 
             settings.$document.on('click.joyride', '.joyride-close-tip', function (e) {
@@ -188,7 +214,8 @@
 
         $blank = $(settings.template.tip).addClass(opts.tip_class);
         content = $.trim($(opts.li).html()) +
-          methods.button_text(opts.button_text) +
+          methods.prev_button_text(opts.prev_button_text, opts.index) +
+          methods.next_button_text(opts.button_text, opts.index) +
           settings.template.link +
           methods.timer_instance(opts.index);
 
@@ -217,14 +244,29 @@
         return txt;
       },
 
-      button_text : function (txt) {
+      next_button_text : function (txt, index) {
         if (settings.nextButton) {
           txt = $.trim(txt) || 'Next';
-          txt = methods.outerHTML($(settings.template.button).append(txt)[0]);
+          txt = methods.outerHTML($(settings.template.next_button).append(txt)[0]);
         } else {
           txt = '';
         }
         return txt;
+      },
+
+      prev_button_text : function (txt, index) {
+        if (settings.prevButton) {
+           txt = $.trim(txt) || 'Prev';
+           if (index == 0){
+               txt = methods.outerHTML($(settings.template.prev_button_disabled).append(txt)[0]);
+           }else{
+               txt = methods.outerHTML($(settings.template.prev_button).append(txt)[0]);
+           }
+
+         } else {
+           txt = '';
+         }
+         return txt;
       },
 
       create : function (opts) {
@@ -242,6 +284,7 @@
       },
 
       show : function (init) {
+        console.log('show');
         var opts = {}, ii, opts_arr = [], opts_len = 0, p,
             $timer = null;
 
@@ -279,15 +322,29 @@
             settings.tipSettings = $.extend({}, settings, opts);
             settings.tipSettings.tipLocationPattern = settings.tipLocationPatterns[settings.tipSettings.tipLocation];
 
+            console.log('Current Tip: .joyride-tip-guide[data-index='+settings.$li.index()+']');
+            console.log('Stated Current Tip: ' +  settings.tipSettings.$current_tip.selector);
+
             if(settings.modal && settings.expose){
               methods.expose();
             }
 
             // scroll if not modal
-
             var shouldScroll = ( settings.tipSettings.scroll != settings.scroll ) ? settings.tipSettings.scroll : settings.scroll ;
             if (!/body/i.test(settings.$target.selector) && (shouldScroll == true)) {
               methods.scroll_to();
+            }
+
+            // Disable previous button on a per tip basis
+            if (methods.stringToBoolean(settings.tipSettings.disablePrev) == true)
+            {
+              $(settings.$current_tip.selector).find('.joyride-prev-tip').addClass('disabled');
+            }
+
+            // Disable previous button on a per tip basis
+            if (methods.stringToBoolean(settings.tipSettings.disableNext) == true)
+            {
+              $(settings.tipSettings.$current_tip.selector).find('.joyride-next-tip').addClass('disabled');
             }
 
             if (methods.is_phone()) {
@@ -314,7 +371,6 @@
                 settings.$next_tip.show();
 
               }
-
 
             } else if (/fade/i.test(settings.tipAnimation)) {
 
@@ -392,7 +448,12 @@
           methods.set_next_tip();
           settings.$current_tip = settings.$next_tip;
         } else {
-          settings.$li = settings.$li.next();
+          if (settings.direction == 'next')
+          {
+            settings.$li = settings.$li.next();
+          }else{
+            settings.$li = settings.$li.prev();
+          }
           methods.set_next_tip();
         }
 
@@ -408,6 +469,7 @@
       },
 
       set_next_tip : function () {
+        console.log('set_next_tip');
         settings.$next_tip = $('.joyride-tip-guide[data-index=' + settings.$li.index() + ']');
       },
 
@@ -929,6 +991,17 @@
             event.preventDefault();
           }
         });
+      },
+
+      stringToBoolean: function(string){
+
+        if (string === true || string === false){ return string; }
+
+        switch(string.toLowerCase()){
+          case "true": case "yes": case "1": return true;
+          case "false": case "no": case "0": case null: return false;
+          default: return Boolean(string);
+        }
       }
 
     };
