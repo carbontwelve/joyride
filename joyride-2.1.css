@@ -159,7 +159,8 @@ body {
 }
 
 /* Button Style */
-.joyride-tip-guide .joyride-next-tip {
+.joyride-tip-guide .joyride-next-tip,
+.joyride-tip-guide .joyride-prev-tip {
   width: auto;
   padding: 6px 18px 4px;
   font-size: 13px;
@@ -194,6 +195,24 @@ body {
   background: -ms-linear-gradient(top, rgb(43,128,255) 0%,rgb(29,102,211) 100%);
   filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#2b80ff', endColorstr='#1d66d3',GradientType=0 );
   background: linear-gradient(top, rgb(43,128,255) 0%,rgb(29,102,211) 100%);
+}
+
+.joyride-tip-guide .joyride-next-tip.disabled,
+.joyride-tip-guide .joyride-next-tip.disabled:hover,
+.joyride-tip-guide .joyride-prev-tip.disabled,
+.joyride-tip-guide .joyride-prev-tip.disabled:hover{
+  background: #999;
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#dadada), to(#f3f3f3));
+  border-top: 1px solid #c5c5c5;
+  border-right: 1px solid #cecece;
+  border-bottom: 1px solid #d9d9d9;
+  border-left: 1px solid #cecece;
+  color: #8f8f8f;
+  box-shadow: none;
+  -moz-box-shadow: none;
+  -webkit-box-shadow: none;
+  cursor: not-allowed;
+  text-shadow: 0 -1px 1px #ebebeb;
 }
 
 .joyride-timer-indicator-wrap {
