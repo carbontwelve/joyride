@@ -1,5 +1,5 @@
 /*
- * jQuery Foundation Joyride Plugin 2.0.3
+ * jQuery Foundation Joyride Plugin 2.1.2
  * http://foundation.zurb.com
  * Copyright 2013, ZURB
  * Free to use under the MIT license.
@@ -12,7 +12,7 @@
   'use strict';
 
   var defaults = {
-      'version'              : '2.1.1',
+      'version'              : '2.1.2',
       'tipLocation'          : 'bottom',  // 'top' or 'bottom' in relation to parent
       'nubPosition'          : 'auto',    // override on a per tooltip bases
       'scroll'               : true,      // whether to scroll to tips
@@ -23,8 +23,8 @@
       'startOffset'          : 0,         // the index of the tooltip you want to start on (index of the li)
       'nextButton'           : true,      // true or false to control whether a next button is used
       'prevButton'           : false,     // true or false to control whether a previous button is used
-      'disableNext'          : false,
-      'disablePrev'          : false,
+      'disableNext'          : false,     // true or false to enable or disable the next button - used for disabling on a per tip basis
+      'disablePrev'          : false,     // true or false to enable or disable the next button - used for disabling on a per tip basis
       'tipAnimation'         : 'fade',    // 'pop' or 'fade' in each tip
       'pauseAfter'           : [],        // array of indexes where to pause the tour after
       'tipAnimationFadeSpeed': 300,       // when tipAnimation = 'fade' this is speed in milliseconds for the transition
@@ -153,7 +153,7 @@
                   $(this).addClass('disabled');
                 }else{
                   methods.hide();
-                  methods.show();
+                  methods.show(false);
                 }
               }
             });
@@ -215,7 +215,7 @@
         $blank = $(settings.template.tip).addClass(opts.tip_class);
         content = $.trim($(opts.li).html()) +
           methods.prev_button_text(opts.prev_button_text, opts.index) +
-          methods.next_button_text(opts.button_text, opts.index) +
+          methods.next_button_text(opts.next_button_text, opts.index) +
           settings.template.link +
           methods.timer_instance(opts.index);
 
@@ -256,7 +256,7 @@
 
       prev_button_text : function (txt, index) {
         if (settings.prevButton) {
-           txt = $.trim(txt) || 'Prev';
+           txt = $.trim(txt) || 'Previous';
            if (index == 0){
                txt = methods.outerHTML($(settings.template.prev_button_disabled).append(txt)[0]);
            }else{
@@ -271,20 +271,21 @@
 
       create : function (opts) {
         // backwards compatibility with data-text attribute
-        var buttonText = opts.$li.attr('data-button') || opts.$li.attr('data-text'),
-          tipClass = opts.$li.attr('class'),
-          $tip_content = $(methods.tip_template({
-            tip_class : tipClass,
-            index : opts.index,
-            button_text : buttonText,
-            li : opts.$li
-          }));
+        var nextButtonText = opts.$li.attr('data-next-button') || opts.$li.attr('data-button') || opts.$li.attr('data-text');
+        var prevButtonText = opts.$li.attr('data-prev-button');
+        var tipClass = opts.$li.attr('class');
+        var $tip_content = $(methods.tip_template({
+          tip_class : tipClass,
+          index : opts.index,
+          next_button_text : nextButtonText,
+          prev_button_text : prevButtonText,
+          li : opts.$li
+        }));
 
         $(settings.tipContainer).append($tip_content);
       },
 
       show : function (init) {
-        console.log('show');
         var opts = {}, ii, opts_arr = [], opts_len = 0, p,
             $timer = null;
 
@@ -302,12 +303,12 @@
 
           if (settings.$li.length && settings.$target.length > 0) {
             if(init){ //run when we first start
-                settings.preRideCallback(settings.$li.index(), settings.$next_tip );
+                settings.preRideCallback(settings.$li.index(), settings.$next_tip, settings.direction);
                 if(settings.modal){
                     methods.show_modal();
                 }
             }
-            settings.preStepCallback(settings.$li.index(), settings.$next_tip );
+            settings.preStepCallback(settings.$li.index(), settings.$next_tip, settings.direction);
 
             // parse options
             opts_arr = (settings.$li.data('options') || ':').split(';');
@@ -321,9 +322,6 @@
             }
             settings.tipSettings = $.extend({}, settings, opts);
             settings.tipSettings.tipLocationPattern = settings.tipLocationPatterns[settings.tipSettings.tipLocation];
-
-            console.log('Current Tip: .joyride-tip-guide[data-index='+settings.$li.index()+']');
-            console.log('Stated Current Tip: ' +  settings.tipSettings.$current_tip.selector);
 
             if(settings.modal && settings.expose){
               methods.expose();
@@ -439,7 +437,7 @@
         $('.joyride-modal-bg').hide();
         }
         settings.$current_tip.hide();
-        settings.postStepCallback(settings.$li.index(), settings.$current_tip);
+        settings.postStepCallback(settings.$li.index(), settings.$current_tip, settings.direction);
       },
 
       set_li : function (init) {
@@ -455,6 +453,7 @@
             settings.$li = settings.$li.prev();
           }
           methods.set_next_tip();
+          settings.$current_tip = settings.$next_tip;
         }
 
         methods.set_target();
@@ -468,8 +467,29 @@
           }
       },
 
+      set_button_active : function (opts) {
+        switch( opts.button )
+        {
+          case 'prev':
+            if (opts.enabled == true)
+            {
+              $(settings.$current_tip.selector).find('.joyride-prev-tip').removeClass('disabled');
+            }else{
+              $(settings.$current_tip.selector).find('.joyride-prev-tip').addClass('disabled');
+            }
+          break;
+          case 'next':
+            if (opts.enabled == true)
+            {
+              $(settings.$current_tip.selector).find('.joyride-next-tip').removeClass('disabled');
+            }else{
+                $(settings.$current_tip.selector).find('.joyride-next-tip').addClass('disabled');
+            }
+          break;
+        }
+      },
+
       set_next_tip : function () {
-        console.log('set_next_tip');
         settings.$next_tip = $('.joyride-tip-guide[data-index=' + settings.$li.index() + ']');
       },
 
@@ -748,7 +768,7 @@
           exposeCover.addClass(settings.tipSettings['exposeClass']);
         }
         el.data('expose', randId);
-        settings.postExposeCallback(settings.$li.index(), settings.$next_tip, el);
+        settings.postExposeCallback(settings.$li.index(), settings.$next_tip, el, settings.direction);
         methods.add_exposed(el);
       },
 
@@ -929,8 +949,8 @@
           settings.$current_tip.hide();
         }
         if (settings.$li) {
-          settings.postStepCallback(settings.$li.index(), settings.$current_tip);
-          settings.postRideCallback(settings.$li.index(), settings.$current_tip);
+          settings.postStepCallback(settings.$li.index(), settings.$current_tip, settings.direction);
+          settings.postRideCallback(settings.$li.index(), settings.$current_tip, settings.direction);
         }
         $('.joyride-modal-bg').hide();
       },

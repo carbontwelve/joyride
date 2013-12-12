@@ -13,11 +13,18 @@ New in 2.1.1 - December 9, 2013 - **UNOFFICIAL VERSION**
 
 ####Carbontwelve Update
 
+New in 2.1.2 - December 12, 2013 - **UNOFFICIAL VERSION**
+* Added previous button functionality enabled via setting `prevButton: true`
+* Added per tip button disabling via `data-options="disableNext:true"` and `data-options="disablePrev:true"`
+* Fixed +1 error as per https://github.com/zurb/joyride/issues/165
+* Added method for enabling buttons during run time via `$('#chooseID').joyride('set_button_active', { button: 'prev', enabled: false})`
+
 Updates that I am working on
 
 ```
 [x] Added Previous button
 [x] Added per tip button disabling
-[ ] Fixed +1 error as per https://github.com/zurb/joyride/issues/165
-[ ] Incremented version number to v2.1.2
+[x] Fixed +1 error as per https://github.com/zurb/joyride/issues/165
+[x] Incremented version number to v2.1.2
 ````
+
