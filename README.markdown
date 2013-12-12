@@ -13,7 +13,11 @@ New in 2.1.1 - December 9, 2013 - **UNOFFICIAL VERSION**
 
 ####Carbontwelve Update
 
-- [x] Added Previous button
-- [x] Added per tip button disabling
-- [ ] Fixed +1 error as per https://github.com/zurb/joyride/issues/165
-- [ ] Incremented version number to v2.1.2
+Updates that I am working on
+
+```
+[x] Added Previous button
+[x] Added per tip button disabling
+[ ] Fixed +1 error as per https://github.com/zurb/joyride/issues/165
+[ ] Incremented version number to v2.1.2
+````
