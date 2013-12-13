@@ -441,30 +441,47 @@
       },
 
       set_li : function (init) {
-        if (init) {
-          settings.$li = settings.$tip_content.eq(settings.startOffset);
+
+        if (settings.jump_to_index !== undefined)
+        {
+          settings.$li = settings.$tip_content.eq(settings.jump_to_index);
           methods.set_next_tip();
           settings.$current_tip = settings.$next_tip;
-        } else {
-          if (settings.direction == 'next')
-          {
-            settings.$li = settings.$li.next();
-          }else{
-            settings.$li = settings.$li.prev();
+          settings.jump_to_index = undefined;
+        }else{
+          if (init) {
+            settings.$li = settings.$tip_content.eq(settings.startOffset);
+            methods.set_next_tip();
+            settings.$current_tip = settings.$next_tip;
+          } else {
+            if (settings.direction == 'next')
+            {
+              settings.$li = settings.$li.next();
+            }else{
+              settings.$li = settings.$li.prev();
+            }
+            methods.set_next_tip();
+            settings.$current_tip = settings.$next_tip;
           }
-          methods.set_next_tip();
-          settings.$current_tip = settings.$next_tip;
         }
 
         methods.set_target();
       },
 
       set_scroll : function(opts){
-          if (opts == true){
-              settings.scroll = true;
-          }else{
-              settings.scroll = false;
-          }
+        if (opts == true){
+          settings.scroll = true;
+        }else{
+          settings.scroll = false;
+        }
+      },
+
+      jump_to: function (index)
+      {
+        methods.hide();                                   // Hide current tip
+        settings.jump_to_index = index;                   // Set jump_to_index
+        methods.show();                                   // Fire show, this will subsequently fire set_li which checks
+                                                          // for jump_to_index and does the jump.
       },
 
       set_button_active : function (opts) {
